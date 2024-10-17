@@ -105,6 +105,7 @@ def insert_data_to_table(conn,
         database (str): database name to insert table 
         table (str): table name to which the data will be inserted
         total_field (str): total fields for columns
+        dataframe (pd.DataFrame): pandas dataframe which holds data
     Returns:
         bool: returns True/False if query executed successfully or not
     """
