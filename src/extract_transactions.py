@@ -49,81 +49,83 @@ def bank_extraction(statement):
 
 
 def clean_upload_data_toserver(st, statement):
-    progress = st.progress(0)
-    log_placeholder = st.empty()
-    # Step 1: Read the file (log progress)
-    bank_name = bank_extraction(statement)
-    
-    df = prepare_dataframe(st=st, statement=statement, bank_name=bank_name, progress=progress, log_placeholder=log_placeholder)
-    
-    # Perform data cleaning and transformations
-    log_placeholder.text("Step 5: Cleaning Transaction Details")
-    df_cleaned = clean_data(df)
-    sleep(1)
-    progress.progress(90)
-    
-    # Connect to MySQL and insert cleaned data
-    log_placeholder.text("Step 6: Inserting Data to Server")
-    # TODO: change id to auto increment and remove id from dataframe
-    # TODO: check if the data is not duplicate while inserting with amount and date
-    # TODO: user cant change table property
-    
-    isinserted = insert_data_to_server(log_placeholder, df_cleaned, bank_name)
-    sleep(1)
-    progress.progress(100)
-    if isinserted:
-        log_placeholder.text("Data Extracted, Cleaned And Stored To Database Successfully!")
-        st.success("Data Processing Successful!")
-    else:
-        st.error("Data Processing Failed!")
-    
+    try:
+        progress = st.progress(0)
+        log_placeholder = st.empty()
+        # Step 1: Read the file (log progress)
+        bank_name = bank_extraction(statement)
+        
+        df = prepare_dataframe(st=st, statement=statement, bank_name=bank_name, progress=progress, log_placeholder=log_placeholder)
+        
+        # Perform data cleaning and transformations
+        log_placeholder.text("Step 5: Cleaning Transaction Details")
+        df_cleaned = clean_data(df)
+        sleep(1)
+        progress.progress(90)
+        
+        # Connect to MySQL and insert cleaned data
+        log_placeholder.text("Step 6: Inserting Data to Server")
+        # TODO: check if the data is not duplicate while inserting with amount and date (add transaction reference)
+        
+        isinserted = insert_data_to_server(log_placeholder, df_cleaned, bank_name)
+        sleep(1)
+        progress.progress(100)
+        if isinserted:
+            log_placeholder.text("Data Extracted, Cleaned And Stored To Database Successfully!")
+            st.success("Data Processing Successful!")
+        else:
+            st.error("Data Processing Failed!")
+    except Exception as e:
+        st.error(f"Data Processing Error! {e}")    
     
 def prepare_dataframe(st, statement, bank_name, progress, log_placeholder):
     
-    # Step 1: Load data from the uploaded file into a DataFrame
-    log_placeholder.text("Step 1: Reading the file...")
-    if bank_name in ['amex_green', 'scotia_visa_credit']:
-        df = pd.read_csv(statement, header=None, names=['transactdate', 'transactdetail', 'amount'])
-    if bank_name == 'scotia_visa_debit':
-        df = pd.read_csv(statement, header=None, names=['transactdate', 'amount', 'transactdetail', 'longdetail'])
-    sleep(1)
-    progress.progress(10)
-    
-    # Ensure the date column is in the correct format (if needed)
-    df['transactdate'] = df['transactdate'].apply(lambda x: parser.parse(x).strftime('%Y-%m-%d') if pd.notnull(x) else None)  # Convert to desired format
-    sleep(0.8)
-    progress.progress(25)
-    
-    # applying index for dataframe
-    df['id'] = range(1, len(df) + 1)
-    
-    # Step 2: Determine 'PurchaseType' based on the 'amount' column
-    log_placeholder.text("Step 2: Determining type of purchase")
-    if bank_name == 'amex_green':
-        df['purchasetype'] = df['amount'].apply(lambda x: 'Credit' if x < 0 else 'Debit')
-    if bank_name in ['scotia_visa_credit', 'scotia_visa_debit']:
-        df['purchasetype'] = df['amount'].apply(lambda x: 'Credit' if x > 0 else 'Debit')
-    df['amount'] = df['amount'].abs() # changing amount to positive values 
-    sleep(0.75)
-    progress.progress(40)
-    
-    # Step 3: Select and rearrange the columns to match the database table schema
-    log_placeholder.text("Step 3: Rearranging final Dataframe")
-    if bank_name in ['amex_green', 'scotia_visa_credit']:
-        df_final = df[['id', 'purchasetype', 'transactdetail', 'transactdate', 'amount']]
-    if bank_name == 'scotia_visa_debit':
-        df_final = df[['id', 'purchasetype', 'transactdetail', 'longdetail', 'transactdate', 'amount']]
-    sleep(0.5)
-    progress.progress(55)
+    try:
+        # Step 1: Load data from the uploaded file into a DataFrame
+        log_placeholder.text("Step 1: Reading the file...")
+        if bank_name in ['amex_green', 'scotia_visa_credit']:
+            df = pd.read_csv(statement, header=None, names=['transactdate', 'transactdetail', 'amount'])
+        if bank_name == 'scotia_visa_debit':
+            df = pd.read_csv(statement, header=None, names=['transactdate', 'amount', 'transactdetail', 'longdetail'])
+        sleep(1)
+        progress.progress(10)
+        
+        # Ensure the date column is in the correct format (if needed)
+        df['transactdate'] = df['transactdate'].apply(lambda x: parser.parse(x).strftime('%Y-%m-%d') if pd.notnull(x) else None)  # Convert to desired format
+        sleep(0.8)
+        progress.progress(25)
+        
+        # applying index for dataframe
+        # df['id'] = range(1, len(df) + 1)
+        
+        # Step 2: Determine 'PurchaseType' based on the 'amount' column
+        log_placeholder.text("Step 2: Determining type of purchase")
+        if bank_name == 'amex_green':
+            df['purchasetype'] = df['amount'].apply(lambda x: 'Credit' if x < 0 else 'Debit')
+        if bank_name in ['scotia_visa_credit', 'scotia_visa_debit']:
+            df['purchasetype'] = df['amount'].apply(lambda x: 'Credit' if x > 0 else 'Debit')
+        df['amount'] = df['amount'].abs() # changing amount to positive values 
+        sleep(0.75)
+        progress.progress(40)
+        
+        # Step 3: Select and rearrange the columns to match the database table schema
+        log_placeholder.text("Step 3: Rearranging final Dataframe")
+        if bank_name in ['amex_green', 'scotia_visa_credit']:
+            df_final = df[['purchasetype', 'transactdetail', 'transactdate', 'amount']]
+        if bank_name == 'scotia_visa_debit':
+            df_final = df[['purchasetype', 'transactdetail', 'longdetail', 'transactdate', 'amount']]
+        sleep(0.5)
+        progress.progress(55)
 
-    # Step 4: Clean the data (you can customize this part)
-    log_placeholder.text("Step 4: Cleaning the data")
-    df_final.dropna(inplace=True)  # Remove rows with missing values
-    df_final.columns = df_final.columns.str.strip()  # Strip leading/trailing whitespace from column names
-    sleep(1.5)
-    progress.progress(70)
-    return df_final
-
+        # Step 4: Clean the data (you can customize this part)
+        log_placeholder.text("Step 4: Cleaning the data")
+        df_final.dropna(inplace=True)  # Remove rows with missing values
+        df_final.columns = df_final.columns.str.strip()  # Strip leading/trailing whitespace from column names
+        sleep(1.5)
+        progress.progress(70)
+        return df_final
+    except Exception as e:
+        st.error(e)
 
 def clean_data(df):
     if "longdetail" in df:
@@ -166,16 +168,21 @@ def insert_data_to_server(log_placeholder, df_cleaned, bank_name) -> bool:
             selected_table = table[0]
             break
     
-    col_dtype, total_fields = schema_template(df_cleaned)
-    print("Schema", total_fields)
+    col_names, col_dtype, total_fields = schema_template(df_cleaned)
     log_placeholder.text("Scheme identified...")
     sleep(1)
     
-    rows_inserted = insert_data_to_table(conn=conn, cursor=cur, database=os.environ['DATABASE'], table=selected_table, total_field=total_fields, dataframe=df_cleaned)
-    print("Shape", df_cleaned.shape[0])
+    try:    
+        rows_inserted = insert_data_to_table(conn=conn, cursor=cur, database=os.environ['DATABASE'], table=selected_table, total_field=total_fields, col_names=col_names, dataframe=df_cleaned)
+    except Exception as e:
+        print(e)
+    
+    cur.close()
+    
     if df_cleaned.shape[0] == rows_inserted:    
         log_placeholder.text(f"{rows_inserted} rows inserted successfully")
+        sleep(1)
         return True
     else:
-        log_placeholder.text(f"Error: Out of {df_cleaned.shape[0]} rows, only {rows_inserted} rows inserted") 
+        log_placeholder.warning(f"Duplicates Transaction Record Found! {rows_inserted}/{df_cleaned.shape[0]} rows inserted") 
         return False       
