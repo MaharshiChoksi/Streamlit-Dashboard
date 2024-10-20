@@ -5,6 +5,8 @@ import pandas as pd
 from time import sleep
 from dateutil import parser
 
+load_dotenv(override=True)
+
 """
 Program Algorithm:
 get_statement -> ask user for statements, validate files
@@ -65,7 +67,6 @@ def clean_upload_data_toserver(st, statement):
         
         # Connect to MySQL and insert cleaned data
         log_placeholder.text("Step 6: Inserting Data to Server")
-        # TODO: check if the data is not duplicate while inserting with amount and date (add transaction reference)
         
         isinserted = insert_data_to_server(log_placeholder, df_cleaned, bank_name)
         sleep(1)
@@ -155,7 +156,7 @@ def clean_data(df):
 
 
 def insert_data_to_server(log_placeholder, df_cleaned, bank_name) -> bool:
-    conn, cur = connect_to_mysql(host=os.environ['HOST'], user=os.environ['SERVER_USERNAME'], port=int(os.environ['PORT']), database=os.environ['DATABASE'])
+    conn, cur = connect_to_mysql(host=os.environ['HOST'], user=os.environ['SERVER_USERNAME'],port=int(os.environ['PORT']), database=os.environ['DATABASE'])
     log_placeholder.text("Connected to Database")
     sleep(0.5)
     
@@ -169,7 +170,7 @@ def insert_data_to_server(log_placeholder, df_cleaned, bank_name) -> bool:
             break
     
     col_names, col_dtype, total_fields = schema_template(df_cleaned)
-    log_placeholder.text("Scheme identified...")
+    log_placeholder.text("Scheme identified! Inserting Data...")
     sleep(1)
     
     try:    

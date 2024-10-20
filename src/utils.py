@@ -25,7 +25,7 @@ def connect_to_mysql(host: str,
     """
 
     try:
-        connection = mdb.connect(host=host, user=user, port=port, password=os.environ['PASSWORD'], database=database)
+        connection = mdb.connect(host=host, user=user, port=port, password=os.environ['SERVER_PASSWORD'], database=database)
         cursor = connection.cursor()
         return connection, cursor
     except mdb.Error as conn_err:
@@ -127,23 +127,21 @@ def insert_data_to_table(conn,
 
 
 # TODO-5: Fetch Data Method
-def get_data_from_table(table:str, cursor, database:str) -> list:
+def get_data_from_table(cursor, database:str, query: str) -> list:
     """ Pull data from the table in the database passed in argument
 
     Args:
-        table (str):  table name from where the data will be fetched
         cursor (sql.connection.MySQLCursor):  cursor string as argument
         database (str): database name where table is located
-
+        query (Str): sql query to fetch data
     Returns:
         list: returns retrived data in form of list
     """
     try:
         query_use_db = f"USE {database};"
-        query_get_data = f"select * from {table};"
         
         cursor.execute(query_use_db)
-        cursor.execute(query_get_data)
+        cursor.execute(query)
         return cursor.fetchall()
     except mdb.Error as pull_data_error:
         raise(pull_data_error)
