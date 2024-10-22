@@ -1,5 +1,6 @@
 from typing import Tuple
 import mysql
+import mysql.connector
 import pandas as pd
 import streamlit as st
 
@@ -25,7 +26,7 @@ def connect_to_mysql(host: str,
         connection = mysql.connector.connect(host=host, user=user, port=port, password=st.secrets['SERVER_PASSWORD'], database=database)
         cursor = connection.cursor()
         return connection, cursor
-    except mysql.Error as conn_err:
+    except mysql.connector.Error as conn_err:
         raise(conn_err)
 
 
@@ -51,7 +52,7 @@ def create_database(cursor, dbname: str) -> bool:
         databases = cursor.fetchall()  
         return databases  
 
-    except mysql.Error as db_create_err:
+    except mysql.connector.Error as db_create_err:
         raise(db_create_err)
 
 
@@ -82,7 +83,7 @@ def create_table(cursor,
         cursor.execute(query_create_table)
         print("Table Created")
         return True
-    except mysql.Error as tb_create_err:
+    except mysql.connector.Error as tb_create_err:
         raise(tb_create_err)
 
 
@@ -117,7 +118,7 @@ def insert_data_to_table(conn,
             if cursor.rowcount == 1:
                 row_inserted += 1
                 conn.commit()
-        except mysql.Error as insert_error:
+        except mysql.connector.Error as insert_error:
             print(insert_error, " at ", row)
             continue
     return row_inserted
@@ -140,7 +141,7 @@ def get_data_from_table(cursor, database:str, query: str) -> list:
         cursor.execute(query_use_db)
         cursor.execute(query)
         return cursor.fetchall()
-    except mysql.Error as pull_data_error:
+    except mysql.connector.Error as pull_data_error:
         raise(pull_data_error)
 
 
