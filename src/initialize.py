@@ -1,10 +1,7 @@
-from dotenv import load_dotenv
 import streamlit as st
 from extract_transactions import get_statement
 from create_insights import Generate_insights
-import os
 
-load_dotenv(override=True)
 st.set_page_config(page_title="Bank Statement Analytical Dashboard", layout="wide", initial_sidebar_state="auto")
 
 # Initialize session state variables
@@ -20,7 +17,7 @@ class App():
     # checking user input to credentials
     @staticmethod
     def __credentials_check(cusername: str, cpassword: str) -> bool:
-        if cusername == os.environ['CLIENT_USERNAME'] and cpassword == os.environ['CLIENT_PASSWORD']:
+        if cusername == st.secrets['CLIENT_USERNAME'] and cpassword == st.secrets['CLIENT_PASSWORD']:
             st.session_state.login_status = True
             return True
         return False
@@ -49,13 +46,6 @@ class App():
                     get_statement(st)
             elif selection == options[2]:
                 Generate_insights()
-    
-    # clearing environmentals for the session
-    def __del__(self):
-        keys=list(os.environ.keys())
-        for key in keys:
-            os.environ.pop(key, None)
-        print("All envs cleaned")
 
 # initializing the instance of object if called directly from main file
 if __name__ == "__main__":

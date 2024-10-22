@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import streamlit as st
 from utils import connect_to_mysql
@@ -123,7 +122,7 @@ class Generate_insights():
         
     # TODO: Get data for the selected date and bank
     def get_data_to_dataframe(self):
-        self.conn, self.cur = connect_to_mysql(host=os.environ['HOST'], user=os.environ['SERVER_USERNAME'], port=int(os.environ['PORT']), database=os.environ['DATABASE'])
+        self.conn, self.cur = connect_to_mysql(host=st.secrets['HOST'], user=st.secrets['SERVER_USERNAME'], port=int(st.secrets['PORT']), database=st.secrets['DATABASE'])
         query = f"SELECT purchasetype, transactdetail, transactdate, amount FROM {self.table} WHERE transactdate BETWEEN '{self.start_date}' AND '{self.end_date}';"
         self.df = pd.read_sql(query, self.conn) # loading data to dataframe
 

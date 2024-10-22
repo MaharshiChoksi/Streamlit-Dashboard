@@ -1,10 +1,6 @@
-from dotenv import load_dotenv
 from typing import Tuple
 import mariadb as mdb
-import os
 import pandas as pd
-
-load_dotenv(override=True)
 
 
 # TODO-1: MySQL connection Method
@@ -25,7 +21,7 @@ def connect_to_mysql(host: str,
     """
 
     try:
-        connection = mdb.connect(host=host, user=user, port=port, password=os.environ['SERVER_PASSWORD'], database=database)
+        connection = mdb.connect(host=host, user=user, port=port, password=st.secrets['SERVER_PASSWORD'], database=database)
         cursor = connection.cursor()
         return connection, cursor
     except mdb.Error as conn_err:

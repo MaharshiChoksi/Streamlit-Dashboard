@@ -1,11 +1,8 @@
-from dotenv import load_dotenv
-import os
 from utils import connect_to_mysql, insert_data_to_table, schema_template
 import pandas as pd
 from time import sleep
 from dateutil import parser
-
-load_dotenv(override=True)
+import streamlit as st
 
 """
 Program Algorithm:
@@ -156,7 +153,7 @@ def clean_data(df):
 
 
 def insert_data_to_server(log_placeholder, df_cleaned, bank_name) -> bool:
-    conn, cur = connect_to_mysql(host=os.environ['HOST'], user=os.environ['SERVER_USERNAME'],port=int(os.environ['PORT']), database=os.environ['DATABASE'])
+    conn, cur = connect_to_mysql(host=st.secrets['HOST'], user=st.secrets['SERVER_USERNAME'],port=int(st.secrets['PORT']), database=st.secrets['DATABASE'])
     log_placeholder.text("Connected to Database")
     sleep(0.5)
     
@@ -174,7 +171,7 @@ def insert_data_to_server(log_placeholder, df_cleaned, bank_name) -> bool:
     sleep(1)
     
     try:    
-        rows_inserted = insert_data_to_table(conn=conn, cursor=cur, database=os.environ['DATABASE'], table=selected_table, total_field=total_fields, col_names=col_names, dataframe=df_cleaned)
+        rows_inserted = insert_data_to_table(conn=conn, cursor=cur, database=st.secrets['DATABASE'], table=selected_table, total_field=total_fields, col_names=col_names, dataframe=df_cleaned)
     except Exception as e:
         print(e)
     
