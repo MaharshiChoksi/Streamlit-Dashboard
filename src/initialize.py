@@ -13,9 +13,11 @@ if 'login_status' not in st.session_state:
 
 
 class App():
+    # initialize class object
     def __init__(self) -> None:
         self.user_authentication()
     
+    # checking user input to credentials
     @staticmethod
     def __credentials_check(cusername: str, cpassword: str) -> bool:
         if cusername == os.environ['CLIENT_USERNAME'] and cpassword == os.environ['CLIENT_PASSWORD']:
@@ -23,6 +25,7 @@ class App():
             return True
         return False
 
+    # authenticate user's credentials and login
     def user_authentication(self):
         if not st.session_state.login_status:
             with st.container(border=True):
@@ -47,11 +50,13 @@ class App():
             elif selection == options[2]:
                 Generate_insights()
     
+    # clearing environmentals for the session
     def __del__(self):
         keys=list(os.environ.keys())
         for key in keys:
             os.environ.pop(key, None)
         print("All envs cleaned")
 
+# initializing the instance of object if called directly from main file
 if __name__ == "__main__":
     instant = App()
