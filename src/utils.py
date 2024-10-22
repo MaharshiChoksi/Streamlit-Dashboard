@@ -25,7 +25,7 @@ def connect_to_mysql(host: str,
     """
 
     try:
-        connection = mdb.connect(host=host, user=user, port=port, password=os.environ['PASSWORD'], database=database)
+        connection = mdb.connect(host=host, user=user, port=port, password=os.environ['SERVER_PASSWORD'], database=database)
         cursor = connection.cursor()
         return connection, cursor
     except mdb.Error as conn_err:
@@ -96,6 +96,7 @@ def insert_data_to_table(conn,
                          database:str, 
                          table:str,
                          total_field:str,
+                         col_names: str,
                          dataframe:pd.DataFrame) -> int:
     """Insert data to given table from the database provided as an argument
 
@@ -105,42 +106,42 @@ def insert_data_to_table(conn,
         database (str): database name to insert table 
         table (str): table name to which the data will be inserted
         total_field (str): total fields for columns
+        col_names (str): string literal contains name of columns
+        dataframe (pd.DataFrame): pandas dataframe which holds data
     Returns:
         bool: returns True/False if query executed successfully or not
     """
 
-    try:
-        row_inserted = 0
-        for _, row in dataframe.iterrows():
-            sql = f"INSERT INTO {database}.{table} VALUES ({total_field})"
-            cursor.execute(sql, tuple(row))
+    row_inserted = 0
+    for _, row in dataframe.iterrows():
+        try:
+            ins_qry = f"INSERT INTO {database}.{table}({col_names}) VALUES ({total_field})"
+            cursor.execute(ins_qry, tuple(row))
             if cursor.rowcount == 1:
                 row_inserted += 1
                 conn.commit()
-        print(f"{row_inserted} Data Inserted To table")
-        return row_inserted
-    except mdb.Error as insert_error:
-        raise(insert_error)
+        except mdb.Error as insert_error:
+            print(insert_error, " at ", row)
+            continue
+    return row_inserted
 
 
 # TODO-5: Fetch Data Method
-def get_data_from_table(table:str, cursor, database:str) -> list:
+def get_data_from_table(cursor, database:str, query: str) -> list:
     """ Pull data from the table in the database passed in argument
 
     Args:
-        table (str):  table name from where the data will be fetched
         cursor (sql.connection.MySQLCursor):  cursor string as argument
         database (str): database name where table is located
-
+        query (Str): sql query to fetch data
     Returns:
         list: returns retrived data in form of list
     """
     try:
         query_use_db = f"USE {database};"
-        query_get_data = f"select * from {table};"
         
         cursor.execute(query_use_db)
-        cursor.execute(query_get_data)
+        cursor.execute(query)
         return cursor.fetchall()
     except mdb.Error as pull_data_error:
         raise(pull_data_error)
@@ -171,7 +172,8 @@ def schema_template(dataframe) -> Tuple[str, str]:
         _type_: column data types and total fields in form of string Tuple
     """
     types = ""
-    
+    col_names = col_names = ', '.join([dataframe.columns[i] for i in range(len(dataframe.columns))])
+
     for i, col_type in enumerate(dataframe.dtypes):
         col_name = dataframe.columns[i]
         col_name = col_name.replace('.', '_')
@@ -183,4 +185,4 @@ def schema_template(dataframe) -> Tuple[str, str]:
             types += f'{col_name} INT, '
     col_datatypes = types[:-2]
     total_fields = ', '.join(len(dataframe.columns) * ['%s'])
-    return col_datatypes, total_fields
+    return col_names, col_datatypes, total_fields
