@@ -47,8 +47,6 @@ class App():
             elif selection == options[2]:
                 Generate_insights()
     
-    
-    
     def __del__(self):
         keys=list(os.environ.keys())
         for key in keys:

@@ -179,6 +179,7 @@ def insert_data_to_server(log_placeholder, df_cleaned, bank_name) -> bool:
         print(e)
     
     cur.close()
+    conn.close()
     
     if df_cleaned.shape[0] == rows_inserted:    
         log_placeholder.text(f"{rows_inserted} rows inserted successfully")
